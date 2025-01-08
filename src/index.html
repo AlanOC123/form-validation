@@ -3,9 +3,226 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      form {
+        font: 1em sans-serif;
+        max-width: 320px;
+      }
+
+      p > label {
+        display: block;
+      }
+
+      input[type="text"],
+      input[type="email"],
+      input[type="number"],
+      textarea,
+      fieldset {
+        width: 100%;
+        border: 1px solid #333;
+        box-sizing: border-box;
+      }
+
+      input:invalid {
+        box-shadow: 0 0 5px 1px red;
+      }
+
+      input:focus:invalid {
+        box-shadow: none;
+      }
+
+      input[type="email"] {
+        appearance: none;
+
+        width: 100%;
+        border: 1px solid #333;
+        margin: 0;
+
+        font-family: inherit;
+        font-size: 90%;
+
+        box-sizing: border-box;
+      }
+
+      /* invalid fields */
+      input:invalid {
+        border-color: #900;
+        background-color: #fdd;
+      }
+
+      input:focus:invalid {
+        outline: none;
+      }
+
+      /* error message styles */
+      .error {
+        width: 100%;
+        padding: 0;
+
+        font-size: 80%;
+        color: white;
+        background-color: #900;
+        border-radius: 0 0 5px 5px;
+
+        box-sizing: border-box;
+      }
+
+      .error.active {
+        padding: 0.3em;
+      }
+    </style>
     <title>Template</title>
   </head>
   <body>
-    
+    <form>
+      <label for="mail">
+        I would like you to provide me with an email address:
+      </label>
+      <input type="email" id="mail" name="mail" />
+      <button>Submit</button>
+    </form>
+
+    <script>
+      const email = document.getElementById('mail');
+
+      email.oninput = (event) =>
+      {
+        if (email.validity.typeMismatch) email.setCustomValidity('Expected an email address. abc@123.com format expected')
+        else email.setCustomValidity('')
+      };
+    </script>
+
+    <form>
+      <label for="mail-two">Email address (@example.com only):</label>
+      <input type="email" id="mail-two" />
+      <button>Submit</button>
+    </form>
+
+    <script>
+      const emailTwo = document.getElementById('mail-two');
+
+      emailTwo.oninput = (event) =>
+      {
+        emailTwo.setCustomValidity('');
+        if (!emailTwo.validity.valid) return;
+
+        if (!emailTwo.value.endsWith('@example.com')) emailTwo.setCustomValidity('Expected an @example.com domain only');
+      }
+    </script>
+
+    <form novalidate>
+      <p>
+        <label for="mail-three">
+          <span>Please enter an email address:</span>
+          <input type="email" id="mail-three" name="mail-three" required minlength="8" />
+          <span class="error" aria-live="polite"></span>
+        </label>
+      </p>
+      <button>Submit</button>
+    </form>
+
+    <script>
+      const form = document.querySelector('form[novalidate]');
+      const emailThree = document.getElementById('mail-three');
+      const emailError = document.querySelector('#mail-three + span.error');
+
+      emailThree.oninput = (event) =>
+      {
+        if (emailThree.validity.valid)
+        {
+          emailError.textContent = '';
+          emailError.className = 'error';
+        } else
+        {
+          showError();
+        };
+      }
+
+      form.onsubmit = () =>
+      {
+        if (!emailThree.validity.valid)
+        {
+          showError();
+          event.preventDefault();
+        };
+      };
+
+      function showError()
+      {
+        if (emailThree.validity.valueMissing) {
+          emailError.textContent = "You need to enter an email address.";
+        } else if (emailThree.validity.typeMismatch) {
+          emailError.textContent = "Entered value needs to be an email address.";
+        } else if (emailThree.validity.tooShort) {
+          emailError.textContent = `Email should be at least ${email.minLength} characters; you entered ${email.value.length}.`;
+        }
+        emailError.className = "error active";
+      }
+    </script>
+
+    <form>
+      <label for="postal-code">Postal Code: </label>
+      <input type="text" id="postal-code" />
+      <label for="country">Country: </label>
+      <select id="country">
+        <option value="ch">Switzerland</option>
+        <option value="fr">France</option>
+        <option value="de">Germany</option>
+        <option value="nl">The Netherlands</option>
+        <option value="ie">Ireland</option>
+      </select>
+      <input type="submit" value="Validate" />
+    </form>
+
+    <script>
+      function checkPostalCode() {
+      // For each country, defines the pattern that the postal code has to follow
+      const constraints = {
+        ch: [
+          "^(CH-)?\\d{4}$",
+          "Swiss postal codes must have exactly 4 digits: e.g. CH-1950 or 1950",
+        ],
+        fr: [
+          "^(F-)?\\d{5}$",
+          "French postal codes must have exactly 5 digits: e.g. F-75012 or 75012",
+        ],
+        de: [
+          "^(D-)?\\d{5}$",
+          "German postal codes must have exactly 5 digits: e.g. D-12345 or 12345",
+        ],
+        nl: [
+          "^(NL-)?\\d{4}\\s*([A-RT-Z][A-Z]|S[BCE-RT-Z])$",
+          "Dutch postal codes must have exactly 4 digits, followed by 2 letters except SA, SD and SS",
+        ],
+        ie: [
+          "^[A-Z]\\d{2}\\s?[0-9A-Z]{4}\\s*$",
+          "Irish post codes start with an area locator such as D01 for Dublin 1 and follow 4 unique letters or numbers"
+        ]
+      };
+
+      // Read the country id
+      const country = document.getElementById("country").value;
+
+      // Get the NPA field
+      const postalCodeField = document.getElementById("postal-code");
+
+      // Build the constraint checker
+      const constraint = new RegExp(constraints[country][0], "");
+      console.log(constraint);
+
+      console.log(postalCodeField.value);
+      if (constraint.test(postalCodeField.value.trim())) {
+        postalCodeField.setCustomValidity("");
+      } else {
+        postalCodeField.setCustomValidity(constraints[country][1]);
+      }
+    }
+
+    window.onload = () =>
+    {
+      document.getElementById("country").onchange = checkPostalCode;
+      document.getElementById("postal-code").oninput = checkPostalCode;
+    };
+    </script>
   </body>
 </html>
